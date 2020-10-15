@@ -426,6 +426,7 @@ def compile_obj( src, env=None, label=None ):
 
     print_test( label )
     (base, ext) = os.path.splitext( src )
+    base     = os.path.join( environ['build_dir'], base )
     obj      = base + '.o'
     lang     = lang_map[ ext ]
     compiler = environ[ lang ]
@@ -453,6 +454,7 @@ def link_exe( src, env=None, label=None ):
 
     print_test( label )
     (base, ext) = os.path.splitext( src )
+    base     = os.path.join( environ['build_dir'], base )
     obj      = base + '.o'
     lang     = lang_map[ ext ]
     compiler = environ[ lang ]
@@ -479,6 +481,7 @@ def compile_exe( src, env=None, label=None ):
 
     print_test( label )
     (base, ext) = os.path.splitext( src )
+    base     = os.path.join( environ['build_dir'], base )
     obj      = base + '.o'
     lang     = lang_map[ ext ]
     compiler = environ[ lang ]
@@ -510,9 +513,11 @@ def compile_run( src, env=None, label=None ):
 
     print_test( label )
     (base, ext) = os.path.splitext( src )
+    build_dir = environ['build_dir'] or '.'
+    base     = os.path.join( build_dir, base )
     (rc, stdout, stderr) = compile_exe( src )
     if (rc == 0):
-        (rc, stdout, stderr) = run( './' + base )
+        (rc, stdout, stderr) = run( base )
     print_result( label, rc )
 
     environ.pop()
@@ -532,7 +537,9 @@ def run_exe( src, env=None, label=None ):
 
     print_test( label )
     (base, ext) = os.path.splitext( src )
-    (rc, stdout, stderr) = run( './' + base )
+    build_dir = environ['build_dir'] or '.'
+    base     = os.path.join( build_dir, base )
+    (rc, stdout, stderr) = run( base )
     print_result( label, rc )
 
     environ.pop()
@@ -890,20 +897,22 @@ def output_files( files ):
     if (isinstance( files, str )):
         files = [ files ]
     for fname in files:
-        txt = read( fname + '.in' )
+        in_file = fname + '.in'
+        out_file = os.path.join( environ['build_dir'], fname )
+        txt = read( in_file )
         txt = re.sub( r'@(\w+)@', sub_env, txt )
         txt = re.sub( r'#undef (\w+)', sub_define, txt )
-        exists = os.path.exists( fname )
-        if (exists and txt == read( fname )):
-            print( fname, 'is unchanged' )
+        exists = os.path.exists( out_file )
+        if (exists and txt == read( out_file )):
+            print( out_file, 'is unchanged' )
         else:
             if (exists):
-                bak = fname + '.bak'
-                print( 'backing up', fname, 'to', bak )
-                os.rename( fname, bak )
+                bak_file = out_file + '.bak'
+                print( 'backing up', out_file, 'to', bak_file )
+                os.rename( out_file, bak_file )
             # end
-            print( 'creating', fname )
-            write( fname, txt )
+            print( 'creating', out_file )
+            write( out_file, txt )
         # end
     # end
 # end
@@ -969,7 +978,10 @@ def init( namespace, prefix='/usr/local' ):
         environ['prefix'] = prefix
 
     #--------------------
-    logfile = 'config/log.txt'
+    build_dir = environ['build_dir']
+    config_dir = os.path.join( build_dir, 'config' )
+    os.makedirs( config_dir, exist_ok=True )
+    logfile = os.path.join( config_dir, 'log.txt' )
     print( 'opening log file ' + logfile + '\n' )
     log = open( logfile, 'w' )
 

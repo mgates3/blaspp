@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017-2022, University of Tennessee. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
@@ -10,6 +10,7 @@
 from __future__ import print_function
 
 import sys
+import os
 import re
 import config
 from   config import Error, font, print_msg, print_warn, print_header
@@ -88,8 +89,10 @@ def main():
         print_warn( 'BLAS++ needs TestSweeper for testers.' )
 
     config.extract_defines_from_flags( 'CXXFLAGS', 'blaspp_header_defines' )
+    build_dir = config.environ['build_dir']
+    log_file = os.path.join( build_dir, 'config/log.txt' )
     config.output_files( ['make.inc', 'include/blas/defines.h'] )
-    print( 'log in config/log.txt' )
+    print( 'log in ' + log_file )
 
     print( '-'*80 )
 # end

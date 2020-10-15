@@ -7,26 +7,31 @@
 #   LD, LDFLAGS, LIBS -- Linker, options, library paths, and libraries
 #   AR, RANLIB      -- Archiver, ranlib updates library TOC
 #   prefix          -- where to install BLAS++
+#   build_dir       -- where to build objects, library, and tester; default "."
+
+build_dir ?= .
 
 ifeq ($(MAKECMDGOALS),config)
     # For `make config`, don't include make.inc with previous config;
     # force re-creating make.inc.
     .PHONY: config
-    config: make.inc
+    config: $(build_dir)/make.inc
 
-    make.inc: force
+    $(build_dir)/make.inc: force
+
 else ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
     # For `make clean` or `make distclean`, don't include make.inc,
     # which could generate it. Otherwise, include make.inc.
-    include make.inc
+    include $(build_dir)/make.inc
 endif
 
 python ?= python3
 
 force: ;
 
-make.inc:
+$(build_dir)/make.inc:
 	$(python) configure.py
+	-mv make.inc $(build_dir)/make.inc
 
 # Defaults if not given in make.inc. GNU make doesn't have defaults for these.
 RANLIB   ?= ranlib
@@ -67,14 +72,14 @@ endif
 # Files
 
 lib_src  = $(wildcard src/*.cc)
-lib_obj  = $(addsuffix .o, $(basename $(lib_src)))
-dep     += $(addsuffix .d, $(basename $(lib_src)))
+lib_obj  = $(addprefix $(build_dir)/, $(addsuffix .o, $(basename $(lib_src))))
+dep     += $(addprefix $(build_dir)/, $(addsuffix .d, $(basename $(lib_src))))
 
 tester_src = $(wildcard test/*.cc)
-tester_obj = $(addsuffix .o, $(basename $(tester_src)))
-dep       += $(addsuffix .d, $(basename $(tester_src)))
+tester_obj = $(addprefix $(build_dir)/, $(addsuffix .o, $(basename $(tester_src))))
+dep       += $(addprefix $(build_dir)/, $(addsuffix .d, $(basename $(tester_src))))
 
-tester     = test/tester
+tester     = $(build_dir)/test/tester
 
 #-------------------------------------------------------------------------------
 # TestSweeper
@@ -100,7 +105,7 @@ testsweeper: $(testsweeper)
 
 ifneq ($(wildcard .git),)
     id := $(shell git rev-parse --short HEAD)
-    src/version.o: CXXFLAGS += -DBLASPP_ID='"$(id)"'
+    $(build_dir)/src/version.o: CXXFLAGS += -DBLASPP_ID='"$(id)"'
 endif
 
 last_id := $(shell [ -e .id ] && cat .id || echo 'NA')
@@ -111,7 +116,7 @@ endif
 .id:
 	echo $(id) > .id
 
-src/version.o: .id
+$(build_dir)/src/version.o: .id
 
 #-------------------------------------------------------------------------------
 # BLAS++ specific flags and libraries
@@ -120,7 +125,7 @@ CXXFLAGS += -I./include
 # additional flags and libraries for testers
 $(tester_obj): CXXFLAGS += -I$(testsweeper_dir)
 
-TEST_LDFLAGS += -L./lib -Wl,-rpath,$(abspath ./lib)
+TEST_LDFLAGS += -L$(build_dir)/lib -Wl,-rpath,$(abspath $(build_dir)/lib)
 TEST_LDFLAGS += -L$(testsweeper_dir) -Wl,-rpath,$(abspath $(testsweeper_dir))
 TEST_LIBS    += -lblaspp -ltestsweeper
 
@@ -142,7 +147,7 @@ install: lib $(pkg)
 	cp include/*.hh $(DESTDIR)$(prefix)/include/
 	cp include/blas/*.h  $(DESTDIR)$(prefix)/include/blas/
 	cp include/blas/*.hh $(DESTDIR)$(prefix)/include/blas/
-	cp -R lib/lib* $(DESTDIR)$(prefix)/lib$(LIB_SUFFIX)/
+	cp -R $(build_dir)/lib/lib* $(DESTDIR)$(prefix)/lib$(LIB_SUFFIX)/
 	cp $(pkg) $(DESTDIR)$(prefix)/lib$(LIB_SUFFIX)/pkgconfig/
 
 uninstall:
@@ -152,21 +157,24 @@ uninstall:
 	$(RM) $(DESTDIR)$(prefix)/lib$(LIB_SUFFIX)/pkgconfig/blaspp.pc
 
 #-------------------------------------------------------------------------------
-# if re-configured, recompile everything
-$(lib_obj) $(tester_obj): make.inc
+# If re-configured, recompile everything. Create build directories.
+$(lib_obj) $(tester_obj): $(build_dir)/make.inc | $(build_dir)/src $(build_dir)/test
+
+$(build_dir)/src $(build_dir)/test:
+	mkdir $@
 
 #-------------------------------------------------------------------------------
 # BLAS++ library
-lib_a  = lib/libblaspp.a
-lib_so = lib/libblaspp.so
-lib    = lib/libblaspp.$(lib_ext)
+lib_a  = $(build_dir)/lib/libblaspp.a
+lib_so = $(build_dir)/lib/libblaspp.so
+lib    = $(build_dir)/lib/libblaspp.$(lib_ext)
 
 $(lib_so): $(lib_obj)
-	mkdir -p lib
+	mkdir -p $(build_dir)/lib
 	$(LD) $(LDFLAGS) -shared $(install_name) $(lib_obj) $(LIBS) -o $@
 
 $(lib_a): $(lib_obj)
-	mkdir -p lib
+	mkdir -p $(build_dir)/lib
 	$(RM) $@
 	$(AR) cr $@ $(lib_obj)
 	$(RANLIB) $@
@@ -175,7 +183,7 @@ $(lib_a): $(lib_obj)
 lib src: $(lib)
 
 lib/clean src/clean:
-	$(RM) lib/*.a lib/*.so src/*.o
+	$(RM) $(build_dir)/lib/*.a $(build_dir)/lib/*.so $(build_dir)/src/*.o
 
 #-------------------------------------------------------------------------------
 # TestSweeper library
@@ -196,7 +204,7 @@ test: $(tester)
 tester: $(tester)
 
 test/clean:
-	$(RM) $(tester) test/*.o
+	$(RM) $(tester) $(build_dir)/test/*.o
 
 test/check: check
 
@@ -266,28 +274,31 @@ clean: lib/clean test/clean headers/clean
 	$(RM) $(dep)
 
 distclean: clean
-	$(RM) make.inc include/blas/defines.h
+	$(RM) $(build_dir)/make.inc $(build_dir)/include/blas/defines.h
+	$(RM) $(dep)
+	$(RM) config/*.[od]
+	find config -perm +0100 -type f -delete
 
-%.o: %.cc
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+h$(build_dir)/%.o: %.cc
+	$(CXX) $(CXXFLAGS) -MF $(build_dir)/$*.d -c $< -o $@
 
 # preprocess source
-%.i: %.cc
+$(build_dir)/%.i: %.cc
 	$(CXX) $(CXXFLAGS) -I$(testsweeper_dir) -E $< -o $@
 
 # preprocess source
-%.i: %.h
+$(build_dir)/%.i: %.h
 	$(CXX) $(CXXFLAGS) -I$(testsweeper_dir) -E $< -o $@
 
 # preprocess source
-%.i: %.hh
+$(build_dir)/%.i: %.hh
 	$(CXX) $(CXXFLAGS) -I$(testsweeper_dir) -E $< -o $@
 
 # precompile header to check for errors
-%.gch: %.h
+$(build_dir)/%.gch: %.h
 	$(CXX) $(CXXFLAGS) -I$(testsweeper_dir) -c $< -o $@
 
-%.gch: %.hh
+$(build_dir)/%.gch: %.hh
 	$(CXX) $(CXXFLAGS) -I$(testsweeper_dir) -c $< -o $@
 
 -include $(dep)
