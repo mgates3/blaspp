@@ -120,7 +120,7 @@ $(build_dir)/src/version.o: .id
 
 #-------------------------------------------------------------------------------
 # BLAS++ specific flags and libraries
-CXXFLAGS += -I./include
+CXXFLAGS += -Iinclude -I$(build_dir)/include
 
 # additional flags and libraries for testers
 $(tester_obj): CXXFLAGS += -I$(testsweeper_dir)
@@ -138,7 +138,7 @@ TEST_LIBS    += -lblaspp -ltestsweeper
 
 all: lib tester
 
-pkg = lib/pkgconfig/blaspp.pc
+pkg = $(build_dir)/lib/pkgconfig/blaspp.pc
 
 install: lib $(pkg)
 	mkdir -p $(DESTDIR)$(prefix)/include/blas
@@ -157,11 +157,13 @@ uninstall:
 	$(RM) $(DESTDIR)$(prefix)/lib$(LIB_SUFFIX)/pkgconfig/blaspp.pc
 
 #-------------------------------------------------------------------------------
-# If re-configured, recompile everything. Create build directories.
-$(lib_obj) $(tester_obj): $(build_dir)/make.inc | $(build_dir)/src $(build_dir)/test
+# Create build directories. If re-configured, recompile everything.
+dirs :=  $(build_dir)/include $(build_dir)/include/blas $(build_dir)/src $(build_dir)/test
 
-$(build_dir)/src $(build_dir)/test:
+$(dirs):
 	mkdir $@
+
+$(lib_obj) $(tester_obj): $(build_dir)/make.inc | $(dirs)
 
 #-------------------------------------------------------------------------------
 # BLAS++ library
@@ -230,8 +232,8 @@ include/clean: headers/clean
 #-------------------------------------------------------------------------------
 # pkgconfig
 # Keep -std=c++11 in CXXFLAGS. Keep -fopenmp in LDFLAGS.
-CXXFLAGS_clean = $(filter-out -O% -W% -pedantic -D% -I./include -MMD -fPIC -fopenmp, $(CXXFLAGS))
-CPPFLAGS_clean = $(filter-out -O% -W% -pedantic -D% -I./include -MMD -fPIC -fopenmp, $(CPPFLAGS))
+CXXFLAGS_clean = $(filter-out -O% -W% -pedantic -D% -I$(build_dir)/include -MMD -fPIC -fopenmp, $(CXXFLAGS))
+CPPFLAGS_clean = $(filter-out -O% -W% -pedantic -D% -I$(build_dir)/include -MMD -fPIC -fopenmp, $(CPPFLAGS))
 LDFLAGS_clean  = $(filter-out -fPIC, $(LDFLAGS))
 
 .PHONY: $(pkg)
@@ -279,7 +281,7 @@ distclean: clean
 	$(RM) config/*.[od]
 	find config -perm +0100 -type f -delete
 
-h$(build_dir)/%.o: %.cc
+$(build_dir)/%.o: %.cc
 	$(CXX) $(CXXFLAGS) -MF $(build_dir)/$*.d -c $< -o $@
 
 # preprocess source
