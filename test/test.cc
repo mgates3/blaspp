@@ -289,12 +289,12 @@ int main( int argc, char** argv )
     int status = 0;
     try {
         int version = blas::blaspp_version();
-        printf( "BLAS++ version %d.%02d.%02d, id %s\n",
+        printf( "# BLAS++ version %d.%02d.%02d, id %s\n",
                 version / 10000, (version % 10000) / 100, version % 100,
                 blas::blaspp_id() );
 
         // print input so running `test [input] > out.txt` documents input
-        printf( "input: %s", argv[0] );
+        printf( "# input: %s", argv[0] );
         for (int i = 1; i < argc; ++i) {
             // quote arg if necessary
             std::string arg( argv[i] );
@@ -357,7 +357,7 @@ int main( int argc, char** argv )
                     test_routine( params, true );
                 }
                 catch (const std::exception& ex) {
-                    fprintf( stderr, "%s%sError: %s%s\n",
+                    fprintf( stderr, "# %s%sError: %s%s\n",
                              ansi_bold, ansi_red, ex.what(), ansi_normal );
                     params.okay() = false;
                 }
@@ -373,17 +373,17 @@ int main( int argc, char** argv )
         } while(params.next());
 
         if (status) {
-            printf( "%d tests FAILED for %s.\n", status, routine );
+            printf( "# %d tests FAILED for %s.\n", status, routine );
         }
         else {
-            printf( "All tests passed for %s.\n", routine );
+            printf( "# All tests passed for %s.\n", routine );
         }
     }
     catch (const QuitException& ex) {
         // pass: no error to print
     }
     catch (const std::exception& ex) {
-        fprintf( stderr, "\n%s%sError: %s%s\n",
+        fprintf( stderr, "\n# %s%sError: %s%s\n",
                  ansi_bold, ansi_red, ex.what(), ansi_normal );
         status = -1;
     }
