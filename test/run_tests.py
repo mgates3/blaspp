@@ -405,7 +405,7 @@ def print_tee( *args ):
 
 def run_test( cmd ):
     cmd = opts.test +' '+ cmd[1] +' '+ cmd[0]
-    print_tee( cmd )
+    print_tee( '# ' + cmd )
     output = ''
     p = subprocess.Popen( cmd.split(), stdout=subprocess.PIPE,
                                        stderr=subprocess.STDOUT )
@@ -418,9 +418,9 @@ def run_test( cmd ):
         output += line
     err = p.wait()
     if (err != 0):
-        print_tee( 'FAILED: exit code', err )
+        print_tee( '# FAILED: exit code', err )
     else:
-        print_tee( 'pass' )
+        print_tee( '# pass' )
     return (err, output)
 # end
 
@@ -467,15 +467,15 @@ for cmd in cmds:
 not_seen = list( filter( lambda x: x not in seen, opts.tests ) )
 
 if (not_seen):
-    print_tee( 'Warning: unknown routines:', ' '.join( not_seen ))
+    print_tee( '# Warning: unknown routines:', ' '.join( not_seen ))
 
 # print summary of failures
 nfailed = len( failed_tests )
 if (nfailed > 0):
-    print_tee( '\n' + str(nfailed) + ' routines FAILED:',
+    print_tee( '\n# ' + str(nfailed) + ' routines FAILED:',
                ', '.join( [x[0] for x in failed_tests] ) )
 else:
-    print_tee( '\n' + 'All routines passed.' )
+    print_tee( '\n# ' + 'All routines passed.' )
 
 # generate jUnit compatible test report
 if opts.xml:
@@ -510,7 +510,7 @@ if opts.xml:
 # end
 
 elapsed = time.time() - start
-print_tee( 'Elapsed %.2f sec' % elapsed )
-print_tee( time.ctime() )
+print_tee( '# Elapsed %.2f sec' % elapsed )
+print_tee( '# ' + time.ctime() )
 
 exit( nfailed )
