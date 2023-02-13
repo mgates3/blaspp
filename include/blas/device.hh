@@ -51,7 +51,7 @@ namespace blas {
 
 // -----------------------------------------------------------------------------
 // types
-[[deprecated("use int. Remove 2023-12.")]]
+[[deprecated("use int. To be removed 2023-12.")]]
 typedef int Device;
 
 #ifdef BLAS_HAVE_CUBLAS
@@ -376,13 +376,13 @@ inline const char* device_error_string( rocblas_status error )
 
 // -----------------------------------------------------------------------------
 // set/get device functions
-[[deprecated("use blas::Queues& with all blaspp calls")]]
+[[deprecated("use blas::Queues& with all BLAS++ calls. To be removed 2023-10.")]]
 void set_device( int device );
 
 // private, internal routine; sets device for cuda, rocm; nothing for onemkl
 void internal_set_device( int device );
 
-[[deprecated("use blas::Queues& with all blaspp calls")]]
+[[deprecated("use blas::Queues& with all BLAS++ calls. To be removed 2023-10.")]]
 void get_device( int *device );
 
 device_blas_int get_device_count();
@@ -394,25 +394,25 @@ void enumerate_devices(std::vector<sycl::device> &devices);
 // memory functions
 
 /// @deprecated: use device_free( ptr, queue ).
-[[deprecated("use device_free( ptr, queue )")]]
+[[deprecated("use device_free( ptr, queue ). To be removed 2023-10.")]]
 void device_free( void* ptr );
 
 void device_free( void* ptr, blas::Queue &queue );
 
 /// @deprecated: use host_free_pinned( ptr, queue ).
-// todo: does this really need to be deprecated
+[[deprecated("use host_free_pinned( ptr, queue ). To be removed 2023-10.")]]
 void host_free_pinned( void* ptr );
 
 void host_free_pinned( void* ptr, blas::Queue &queue );
 
 /// @deprecated: use host_free_pinned( ptr, queue ).
-[[deprecated("use device_free_pinned( ptr, queue )")]]
+[[deprecated("use device_free_pinned( ptr, queue ). To be removed 2023-10.")]]
 inline void device_free_pinned( void* ptr ) {
     host_free_pinned( ptr );
 }
 
 /// @deprecated: use host_free_pinned( ptr, queue ).
-[[deprecated("use host_free_pinned( ptr, queue )")]]
+[[deprecated("use host_free_pinned( ptr, queue ). To be removed 2023-10.")]]
 inline void device_free_pinned( void* ptr, blas::Queue &queue )
 {
     host_free_pinned( ptr, queue );
@@ -430,7 +430,7 @@ inline void device_free_pinned( void* ptr, blas::Queue &queue )
 /// in SYCL, this doesn't work since there is no concept of a current device.
 ///
 template <typename T>
-[[deprecated("use device_malloc( nelements, queue )")]]
+[[deprecated("use device_malloc( nelements, queue ). To be removed 2023-10.")]]
 T* device_malloc(
     int64_t nelements)
 {
@@ -501,7 +501,7 @@ T* device_malloc(
 /// in SYCL, this doesn't work since there is no concept of a current device.
 ///
 template <typename T>
-[[deprecated("use host_malloc_pinned( nelements, queue )")]]
+[[deprecated("use host_malloc_pinned( nelements, queue ). To be removed 2023-10.")]]
 T* device_malloc_pinned(
     int64_t nelements)
 {
@@ -569,7 +569,7 @@ T* host_malloc_pinned(
 /// @deprecated: use host_malloc_pinned( nelements, queue ).
 ///
 template <typename T>
-[[deprecated("device_malloc_pinned( nelements, queue )")]]
+[[deprecated("device_malloc_pinned( nelements, queue ). To be removed 2023-10.")]]
 T* device_malloc_pinned(
     int64_t nelements, blas::Queue &queue )
 {
@@ -898,7 +898,7 @@ void device_copy_matrix(
 /// @see device_copy_vector
 ///
 template <typename T>
-[[deprecated("recommend device_copy_vector( n, any_src, inc_src, any_dst, inc_dst, queue )")]]
+[[deprecated("recommend device_copy_vector( n, any_src, inc_src, any_dst, inc_dst, queue ). To be removed 2023-10.")]]
 void device_setvector(
     int64_t n,
     T const* src_host, int64_t inc_src,
@@ -917,7 +917,7 @@ void device_setvector(
 /// @see device_copy_vector
 ///
 template <typename T>
-[[deprecated("recommend device_copy_vector( n, any_src, inc_src, any_dst, inc_dst, queue )")]]
+[[deprecated("recommend device_copy_vector( n, any_src, inc_src, any_dst, inc_dst, queue ). To be removed 2023-10.")]]
 void device_getvector(
     int64_t n,
     T const* src_dev,  int64_t inc_src,
@@ -936,7 +936,7 @@ void device_getvector(
 /// @see device_copy_matrix
 ///
 template <typename T>
-[[deprecated("recommend device_copy_matrix( m, n, any_src, ld_src, any_dst, ld_dst, queue )")]]
+[[deprecated("recommend device_copy_matrix( m, n, any_src, ld_src, any_dst, ld_dst, queue ). To be removed 2023-10.")]]
 void device_setmatrix(
     int64_t m, int64_t n,
     T const* src_host, int64_t ld_src,
@@ -955,7 +955,7 @@ void device_setmatrix(
 /// @see device_copy_matrix
 ///
 template <typename T>
-[[deprecated("recommend device_copy_matrix( m, n, any_src, ld_src, any_dst, ld_dst, queue )")]]
+[[deprecated("recommend device_copy_matrix( m, n, any_src, ld_src, any_dst, ld_dst, queue ). To be removed 2023-10.")]]
 void device_getmatrix(
     int64_t m, int64_t n,
     T const* src_dev,  int64_t ld_src,
